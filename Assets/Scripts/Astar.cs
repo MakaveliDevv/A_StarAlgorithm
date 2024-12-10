@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 
 public class Astar
 {
@@ -44,6 +45,37 @@ public class Astar
             List<Cell> neighbourCells = grid[currentNode.position.x, currentNode.position.y].GetNeighbours(grid);
             foreach (Cell cell in neighbourCells)
             {
+                // Calculate the distance between the neighbor cell and the current cell
+                Vector2Int direction = cell.gridPosition - currentNode.position;
+                
+                Wall currentWall, neighborWall;
+
+                // Map the directions
+                if(direction == Vector2Int.up) 
+                {
+                    currentWall = Wall.UP;
+                    neighborWall = Wall.DOWN;
+                }
+                else if(direction == Vector2Int.right) 
+                {
+                    currentWall = Wall.RIGHT;
+                    neighborWall = Wall.LEFT;
+                }
+                else if(direction == Vector2Int.down) 
+                {
+                    currentWall = Wall.DOWN;
+                    neighborWall = Wall.UP;
+                }
+                else if(direction == Vector2Int.left) 
+                {
+                    currentWall = Wall.LEFT;
+                    neighborWall = Wall.RIGHT;
+                }
+                else continue;
+
+                if(grid[currentNode.position.x, currentNode.position.y].HasWall(currentWall) || cell.HasWall(neighborWall)) 
+                    continue;
+                
                 // Store the position of the cell
                 Vector2Int neighbourCell = cell.gridPosition;
 
@@ -55,7 +87,7 @@ public class Astar
                 float newGscore = currentNode.GScore + Vector2.Distance(currentNode.position, neighbourCell);
 
                 // Fetch the neighbour node
-                Node neighbourNode = GetNodeFromList(openList, neighbourCell);
+                Node neighbourNode = FetchNodeFromList(openList, neighbourCell);
 
                 if(neighbourNode == null) 
                 {
@@ -91,7 +123,7 @@ public class Astar
         return false;
     }
 
-    private Node GetNodeFromList(List<Node> nodeList, Vector2Int position) 
+    private Node FetchNodeFromList(List<Node> nodeList, Vector2Int position) 
     {
         foreach (Node node in nodeList)
         {
@@ -128,7 +160,7 @@ public class Astar
         List<Vector2Int> path = new();
         Node currentNode = endNode;
 
-        while(currentNode != endNode) 
+        while(currentNode != null) 
         {
             path.Add(currentNode.position);
             currentNode = currentNode.parent;
